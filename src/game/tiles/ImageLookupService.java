@@ -62,6 +62,8 @@ public class ImageLookupService {
                 return new Image("icons/x.png");
             case ROBOT:
                 return new Image("icons/robot.png");
+            case ICON:
+                return new Image("icons/icon.jpeg");
         }
 
         return null;

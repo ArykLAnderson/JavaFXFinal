@@ -6,13 +6,26 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Scanner;
+
 public class PlayFieldPane extends GridPane{
 
     private TileType _currentType;
+    private TileType[][] _saveGrid;
 
     public PlayFieldPane() {
         super();
+        _saveGrid = new TileType[13][13];
         this.init();
+        _currentType = TileType.BLANK;
+    }
+
+    private PlayFieldPane(boolean simple) {
+        super();
+        _saveGrid = new TileType[13][13];
         _currentType = TileType.BLANK;
     }
 
@@ -21,12 +34,18 @@ public class PlayFieldPane extends GridPane{
             for (int j = 0; j < 13; j++) {
 
                 PlayTile tile;
-                if (j == 0 && i == 6)
+                if (j == 0 && i == 6) {
                     tile = TileFactory.instance().createTile(TileType.SOURCE);
-                else if (j == 12 && i == 6)
+                    _saveGrid[i][j] = TileType.SOURCE;
+                }
+                else if (j == 12 && i == 6) {
                     tile = TileFactory.instance().createTile(TileType.SINK);
-                else
+                    _saveGrid[i][j] = TileType.SINK;
+                }
+                else {
                     tile = TileFactory.instance().createTile(TileType.BLANK);
+                    _saveGrid[i][j] = TileType.BLANK;
+                }
 
                 tile.setTilePrefSize();
                 tile.setXPos(i);
@@ -54,6 +73,7 @@ public class PlayFieldPane extends GridPane{
 
         this.getChildren().remove(source);
         PlayTile newTile = TileFactory.instance().createTile(_currentType);
+        _saveGrid[x][y] = _currentType;
         newTile.setTilePrefSize();
         newTile.setXPos(x);
         newTile.setYPos(y);
@@ -62,47 +82,77 @@ public class PlayFieldPane extends GridPane{
         this.add(newTile, x, y, 1, 1);
     }
 
-//    private void onDragged(MouseEvent event) {
-//
-//        ImageView view = (ImageView) event.getSource();
-//        Dragboard board = view.startDragAndDrop(TransferMode.COPY);
-//        board.setDragView(view.getImage(), 0.5*view.getImage().getWidth(), 0.5*view.getImage().getWidth());
-//        ClipboardContent content = new ClipboardContent();
-//        content.putString((String)view.getUserData());
-//        board.setContent(content);
-//    }
-//
-//    private void onDragOver(DragEvent event) {
-//
-//        ImageView target = (ImageView) event.getTarget();
-//        String data = (String) target.getUserData();
-//
-//        if (target != event.getSource())
-//            return;
-//
-//        if (!data.equals("BLANK"))
-//            return;
-//
-//        Dragboard dragboard = event.getDragboard();
-//        if (dragboard.getString() == null)
-//            return;
-//
-//        if (dragboard.getString().equals("X") || dragboard.getString().equals("O")) {
-//            event.acceptTransferModes(TransferMode.COPY);
-//        }
-//    }
-//
-//    private void onDragDropped(DragEvent event) {
-//        ImageView view = (ImageView) event.getSource();
-//        Dragboard dragboard = event.getDragboard();
-//
-//        if (dragboard.getString().equalsIgnoreCase("x")) {
-//            ((ImageView)event.getTarget()).setImage(map(ImageType.x).getImage());
-//        } else if (dragboard.getString().equalsIgnoreCase("o")){
-//            ((ImageView)event.getTarget()).setImage(map(ImageType.o).getImage());
-//        } else
-//            return;
-//
-//        event.setDropCompleted(true);
-//    }
+    public void parseSolution(File file) throws IOException, NumberFormatException {
+
+        if (file == null)
+            throw new IOException("No file pointer supplied");
+
+        this.getChildren().clear();
+        Scanner scanner = new Scanner(new FileInputStream(file));
+
+        scanner.nextLine();
+        scanner.nextLine();
+
+        for (int i = 0; i < 13; i++) {
+            String line = scanner.nextLine();
+            for (int j = 0; j < 13; j++) {
+                char cur = line.charAt(j);
+                _saveGrid[j][i] = charToTileMap(cur);
+                PlayTile newTile = TileFactory.instance().createTile(charToTileMap(cur));
+                newTile.setTilePrefSize();
+                newTile.setXPos(j);
+                newTile.setYPos(i);
+                newTile.setOnMouseClicked(this::replaceTile);
+                this.add(newTile, j, i);
+            }
+        }
+    }
+
+    public static char tileToCharMap(TileType type) {
+
+        switch(type) {
+            case BLANK: return '0';
+            case SOURCE: return '1';
+            case SINK: return '2';
+            case UP: return '3';
+            case DOWN: return '4';
+            case LEFT: return '5';
+            case RIGHT: return '6';
+            case UPSWITCH: return '7';
+            case DOWNSWITCH: return '8';
+            case RIGHTSWITCH: return 'a';
+            case LEFTSWITCH: return '9';
+        }
+
+        return ' ';
+    }
+
+    public static TileType charToTileMap(char map) {
+
+        switch(map) {
+            case '0':
+                return TileType.BLANK;
+            case '1':
+                return TileType.SOURCE;
+            case '2':
+                return TileType.SINK;
+            case '3':
+                return TileType.UP;
+            case '4':
+                return TileType.DOWN;
+            case '5':
+                return TileType.LEFT;
+            case '6':
+                return TileType.RIGHT;
+            case '8':
+                return TileType.DOWNSWITCH;
+            case '7':
+                return TileType.UPSWITCH;
+            case '9':
+                return TileType.LEFTSWITCH;
+            case 'a':
+                return TileType.RIGHTSWITCH;
+        }
+        return null;
+    }
 }

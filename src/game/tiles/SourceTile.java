@@ -14,10 +14,11 @@ public class SourceTile extends PlayTile {
 
     public static SourceTile instance() {
 
-        if (_instance == null)
-            _instance = new SourceTile();
-
-        return _instance;
+        return new SourceTile();
+//        if (_instance == null)
+//            _instance = new SourceTile();
+//
+//        return _instance;
     }
 
     @Override
